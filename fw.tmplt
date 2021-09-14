@@ -1,0 +1,15 @@
+#. sv.cfg
+for c in `iptables -L | grep -i chain | awk '{print $2}'`; do iptables -F $c; done;
+echo 1 > /proc/sys/net/ipv4/ip_forward; iptables -F -t nat;
+ipNat(){
+ srcIp=$1;srcPrt=$2; dstIp=$3;dstPrt=$4;wk=$5;tmb=$6;tme=$7; mIp=$8; mca=$9;
+ case $wk in wd) wk="--weekdays Mon,Tue,Wed,Thu,Fri,Sat"; ;;  weo) wk="--weekdays Sat,Sun"; ;; *) wk=""; ;; esac; if [ $tmb = 0:00 -a $tme = 23:59 ]; then tm=""; else tm=" --timestart $tmb --timestop $tme"; fi; tm=" -m time $tm $wk";
+ [[ $mca != 'NA' ]] && mcC="-m mac --mac-source $mca" || mcC="" ; iptables -t nat -A PREROUTING -p tcp -s $srcIp --dport $srcPrt -j DNAT --to-destination $dstIp:$dstPrt $tm --kerneltz $mcC;
+ if [[ $mIp != 'NA' ]]; then iptables -t nat -A POSTROUTING -p tcp -j SNAT -s $srcIp -d $dstIp --to-source $mIp $tm --kerneltz; fi;
+ #add: -m owner --uid-owner $osuser
+ #if [ $srcIp = '10.137.128.86' ]; then iptables -t nat -A POSTROUTING -p tcp -j SNAT -s $srcIp -d $dstIp --to $mIp; fi;
+ #worked: iptables -t nat -A POSTROUTING -p tcp -j SNAT -s 10.137.144.43 -d 10.137.144.32 --to 20.34.45.1; db: route add -net 20.34.45.0/24 gw 10.137.144.40; route add -net 20.34.45.0/24 10.137.144.40; add in sqlnet.ora
+}
+
+
+
